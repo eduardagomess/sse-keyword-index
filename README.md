@@ -48,6 +48,20 @@ Matching documents: doc3, doc12, doc57
 Search time: 0.0021 seconds
 ```
 
+## Running Tests
+
+```bash
+PYTHONPATH=. pytest tests/
+```
+
+This runs:
+
+- test_crypto.py: tests core cryptographic functions: key generation, PRFs, determinism, and input sensitivity.
+
+- test_index.py: tests whether the lookup table entry (T) is correctly masked and unmasked using the keyword-derived mask.
+
+- test_integration.py: tests the full workflow: document encryption, index construction, trapdoor generation, and correct/incorrect search results.
+
 ## Technologies Used
 
 - PyCryptodome — AES symmetric encryption (AES-CBC)
