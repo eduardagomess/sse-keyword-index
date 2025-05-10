@@ -26,3 +26,4 @@ Thumbs.db
 
 # Jupyter notebook checkpoints (in case you use notebooks)
 .ipynb_checkpoints/
+venv/
