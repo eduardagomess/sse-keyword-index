@@ -48,7 +48,6 @@ class Client:
         # keywords_map: {'doc1.txt': ['cancer'], 'doc2.txt': ['diabetes']}
         return documents, keywords_map
 
-
     def encrypt_documents(self, documents: Dict[str, str]) -> Dict[str, bytes]:
         """
         Encrypts all plaintext documents using the symmetric key K4
@@ -87,29 +86,33 @@ class Client:
             for i, doc_id in enumerate(doc_ids):
                 ki = get_random_bytes(16)  # generate K_{i,j}: to be included in the current node and used to decrypt the next one
 
+                # pseudo-random address where the current node will be stored in array A
+                # reduce the PRF output modulo INDEX_TABLE_SIZE to constrain addresses to a fixed-size array A[0..INDEX_TABLE_SIZE-1]
+                addr = PRF(self.K1, str(self.counter)) % INDEX_TABLE_SIZE
+
                 if i < len(doc_ids) - 1:  # if it is not the last document
-                    next_ptr = PRF_bytes(self.K1, str(self.counter + 1), 4)  # pseudo-random pointer to the next node (PRF_{K1}(ctr + 1))
+                    # generate next node address and convert to bytes
+                    next_addr = PRF(self.K1, str(self.counter + 1)) % INDEX_TABLE_SIZE
+                    next_ptr = next_addr.to_bytes(4, 'big')  # pseudo-random pointer to the next node (PRF_{K1}(ctr + 1))
                     key_next = ki  # key to decrypt the next node (K_{i,j})
+                    ptr_hex = next_ptr.hex()
                 else:
-                    next_ptr = b'NULL'  # marks the end of the linked list (no next node)
                     key_next = b'0' * 16   # dummy key (0^k) since there is no next node to decrypt
+                    ptr_hex = "NULL"       # marks the end of the linked list
 
                 node = {
                     "id": doc_id,
-                    "k": key_next.hex(),  # key to decrypt the next node (K_{i,j}) in hex format
-                    "ptr": next_ptr.hex() if next_ptr != b'NULL' else "NULL"  # pointer to the next node
+                    "k": key_next.hex(),    # key to decrypt the next node (K_{i,j}) in hex format
+                    "ptr": ptr_hex          # pointer to the next node
                 }
-
-                # pseudo-random address where the current node will be stored in array A
-                # reduce the PRF output modulo INDEX_TABLE_SIZE to constrain addresses to a fixed-size array A[0..INDEX_TABLE_SIZE-1]
-                addr = PRF(self.K1, str(self.counter)) % INDEX_TABLE_SIZE  
-                # store the address of the first node — it will be used later to build the T[π_{K3}(w)] entry
-                if addr_first is None:
-                    addr_first = addr
 
                 # encrypt the current node using the previous key (K_{i,j-1}) and store it in A
                 encrypted_node = SKE_encrypt(ki_prev, json.dumps(node).encode())
                 self.A[addr] = encrypted_node  # store encrypted node at pseudo-random address
+
+                # store the address of the first node — it will be used later to build the T[π_{K3}(w)] entry
+                if addr_first is None:
+                    addr_first = addr
 
                 # prepare for the next node: update previous key and increment the counter
                 ki_prev = ki  # K_{i,j} becomes K_{i,j-1} for the next iteration

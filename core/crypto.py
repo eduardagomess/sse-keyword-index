@@ -40,7 +40,7 @@ def PRF_bytes(key: bytes, data: str, length: int = 16) -> bytes:
     keys, masks, or pointers in the SSE index.
     """
     
-    hashlib.pbkdf2_hmac(
+    return hashlib.pbkdf2_hmac(
     'sha256',         # hash algorithm
     data.encode(),    # input string encoded as bytes
     key,              # secret key used as salt
