@@ -56,16 +56,12 @@ class Server:
             encrypted_node = self.A.get(addr)
             if not encrypted_node:
                 break  # no node found at this address — stop
-
             try:
                 # decrypt the current node using the key from the previous step
                 plaintext = SKE_decrypt(key, encrypted_node)
                 decrypted = json.loads(plaintext.decode())
             except Exception as e:
-                print("❌ Failed to decrypt node")
-                print(f"Address: {addr}")
-                print(f"Key (hex): {key.hex()}")
-                print(f"Encrypted (first 16 bytes): {encrypted_node[:16].hex()}...")
+                print("Failed to decrypt node")
                 raise e
 
             # collect the document ID from the current node
